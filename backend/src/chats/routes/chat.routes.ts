@@ -4,6 +4,8 @@ import {
   getChatByCustomer,
   listChats,
 } from '../stores/chat.store';
+import { autoAssignAgent } from '../stores/chat.store';
+
 
 const router = Router();
 
@@ -41,6 +43,7 @@ router.post('/', (req: Request, res: Response) => {
 
   const existing = getChatByCustomer(customerId);
   const chat = getOrCreateChat(customerId, customerName);
+  autoAssignAgent(customerId);
 
   res.status(existing ? 200 : 201).json(chat);
 });

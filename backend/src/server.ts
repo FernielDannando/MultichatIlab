@@ -1,11 +1,14 @@
 import express, { Request, Response } from 'express';
 import agentRoutes from './agents/agent.routes';
+import chatRoutes from './chats/routes/chat.routes';
+
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 app.use('/agents', agentRoutes);
+app.use('/chats', chatRoutes);
 
 
 app.get('/health', (_req: Request, res: Response) => {

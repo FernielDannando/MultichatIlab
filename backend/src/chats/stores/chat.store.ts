@@ -1,5 +1,6 @@
 import { Chat, Message } from '../models/chat.model';
 import { randomUUID } from 'crypto';
+import { agents, getOnlineAgents } from '../../agents/agent.store';
 
 /**
  * Store en memoria para chats
@@ -16,6 +17,7 @@ export function getChatByCustomer(customerId: string): Chat | undefined {
 
 /**
  * Crear un chat nuevo
+ * → Auto-asigna un agente si hay alguno online
  */
 export function createChat(
   customerId: string,
@@ -23,11 +25,15 @@ export function createChat(
 ): Chat {
   const now = new Date();
 
+  const onlineAgents = getOnlineAgents();
+  const assignedAgents =
+    onlineAgents.length > 0 ? [onlineAgents[0].id] : [];
+
   const chat: Chat = {
     id: randomUUID(),
     customerId,
     customerName,
-    assignedAgents: [],
+    assignedAgents,
     messages: [],
     createdAt: now,
     lastActivityAt: now,
@@ -111,6 +117,29 @@ export function unassignAgentFromChat(
   if (!chat) return null;
 
   chat.assignedAgents = chat.assignedAgents.filter(id => id !== agentId);
+  chat.lastActivityAt = new Date();
+
+  return chat;
+}
+
+/**
+ * Asignar automáticamente un agente disponible
+ * (si el chat aún no tiene agentes)
+ */
+export function autoAssignAgent(customerId: string): Chat | null {
+  const chat = chats.get(customerId);
+  if (!chat) return null;
+
+  if (chat.assignedAgents.length > 0) {
+    return chat;
+  }
+
+  const availableAgents = getOnlineAgents();
+  if (availableAgents.length === 0) {
+    return chat;
+  }
+
+  chat.assignedAgents.push(availableAgents[0].id);
   chat.lastActivityAt = new Date();
 
   return chat;
