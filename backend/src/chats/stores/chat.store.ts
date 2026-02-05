@@ -1,4 +1,4 @@
-import { Chat } from '../models/chat.model';
+import { Chat, Message } from '../models/chat.model';
 import { randomUUID } from 'crypto';
 
 /**
@@ -17,7 +17,10 @@ export function getChatByCustomer(customerId: string): Chat | undefined {
 /**
  * Crear un chat nuevo
  */
-export function createChat(customerId: string, customerName?: string): Chat {
+export function createChat(
+  customerId: string,
+  customerName?: string
+): Chat {
   const now = new Date();
 
   const chat: Chat = {
@@ -50,10 +53,36 @@ export function getOrCreateChat(
 }
 
 /**
- * Listar todos los chats
+ * Listar todos los chats ordenados por actividad
  */
 export function listChats(): Chat[] {
   return Array.from(chats.values()).sort(
     (a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime()
   );
+}
+
+/**
+ * Agregar mensaje a un chat
+ */
+export function addMessageToChat(
+  customerId: string,
+  senderType: 'customer' | 'agent',
+  senderId: string,
+  content: string
+): Message | null {
+  const chat = chats.get(customerId);
+  if (!chat) return null;
+
+  const message: Message = {
+    id: randomUUID(),
+    senderType,
+    senderId,
+    content,
+    createdAt: new Date(),
+  };
+
+  chat.messages.push(message);
+  chat.lastActivityAt = new Date();
+
+  return message;
 }
