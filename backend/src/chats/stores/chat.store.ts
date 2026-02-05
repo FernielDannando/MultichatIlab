@@ -44,12 +44,7 @@ export function getOrCreateChat(
   customerId: string,
   customerName?: string
 ): Chat {
-  const existing = getChatByCustomer(customerId);
-  if (existing) {
-    return existing;
-  }
-
-  return createChat(customerId, customerName);
+  return getChatByCustomer(customerId) ?? createChat(customerId, customerName);
 }
 
 /**
@@ -85,4 +80,38 @@ export function addMessageToChat(
   chat.lastActivityAt = new Date();
 
   return message;
+}
+
+/**
+ * Asignar agente a un chat
+ */
+export function assignAgentToChat(
+  customerId: string,
+  agentId: string
+): Chat | null {
+  const chat = chats.get(customerId);
+  if (!chat) return null;
+
+  if (!chat.assignedAgents.includes(agentId)) {
+    chat.assignedAgents.push(agentId);
+    chat.lastActivityAt = new Date();
+  }
+
+  return chat;
+}
+
+/**
+ * Remover agente de un chat
+ */
+export function unassignAgentFromChat(
+  customerId: string,
+  agentId: string
+): Chat | null {
+  const chat = chats.get(customerId);
+  if (!chat) return null;
+
+  chat.assignedAgents = chat.assignedAgents.filter(id => id !== agentId);
+  chat.lastActivityAt = new Date();
+
+  return chat;
 }

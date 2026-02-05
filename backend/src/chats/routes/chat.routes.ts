@@ -8,28 +8,17 @@ import {
 const router = Router();
 
 /**
- * Crear u obtener chat
+ * Listar todos los chats
  */
-router.post('/', (req: Request, res: Response) => {
-  const { customerId, customerName } = req.body;
-
-  if (!customerId) {
-    return res.status(400).json({ error: 'customerId is required' });
-  }
-
-  const chat = getOrCreateChat(customerId, customerName);
-  res.status(201).json(chat);
+router.get('/', (_req: Request, res: Response) => {
+  res.json(listChats());
 });
 
 /**
  * Obtener chat por customerId
  */
 router.get('/:customerId', (req: Request, res: Response) => {
-  const { customerId } = req.params;
-
-  if (typeof customerId !== 'string') {
-    return res.status(400).json({ error: 'Invalid customerId' });
-  }
+  const customerId = req.params.customerId as string;
 
   const chat = getChatByCustomer(customerId);
 
@@ -40,12 +29,20 @@ router.get('/:customerId', (req: Request, res: Response) => {
   res.json(chat);
 });
 
-
 /**
- * Listar todos los chats
+ * Crear u obtener chat
  */
-router.get('/', (_req: Request, res: Response) => {
-  res.json(listChats());
+router.post('/', (req: Request, res: Response) => {
+  const { customerId, customerName } = req.body;
+
+  if (!customerId) {
+    return res.status(400).json({ error: 'customerId is required' });
+  }
+
+  const existing = getChatByCustomer(customerId);
+  const chat = getOrCreateChat(customerId, customerName);
+
+  res.status(existing ? 200 : 201).json(chat);
 });
 
 export default router;
