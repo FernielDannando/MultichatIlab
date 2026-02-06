@@ -1,33 +1,43 @@
-import { Server } from 'socket.io';
+import { Server as HttpServer } from 'http';
+import { Server, Socket } from 'socket.io';
 
 let io: Server;
 
-export function initSocket(server: any) {
+/**
+ * Inicializa Socket.IO
+ */
+export function initSocket(server: HttpServer) {
   io = new Server(server, {
     cors: {
       origin: '*',
     },
   });
 
-  io.on('connection', socket => {
-    console.log('🟢 Cliente conectado:', socket.id);
+  io.on('connection', (socket: Socket) => {
+    console.log('Cliente conectado:', socket.id);
 
-    socket.on('join-chat', (chatId: string) => {
-      socket.join(chatId);
-      console.log(`📥 Socket ${socket.id} unido a chat ${chatId}`);
+    /**
+     * Unirse a un chat (room)
+     */
+    socket.on('join-chat', (customerId: string) => {
+      socket.join(customerId);
+      console.log(`Socket ${socket.id} unido al chat ${customerId}`);
     });
 
     socket.on('disconnect', () => {
-      console.log('🔴 Cliente desconectado:', socket.id);
+      console.log('Cliente desconectado:', socket.id);
     });
   });
-
-  return io;
 }
 
-export function getIO(): Server {
-  if (!io) {
-    throw new Error('Socket.io no inicializado');
-  }
-  return io;
+/**
+ * Emitir evento a un chat completo
+ */
+export function emitToChat(
+  customerId: string,
+  event: string,
+  payload: any
+) {
+  if (!io) return;
+  io.to(customerId).emit(event, payload);
 }

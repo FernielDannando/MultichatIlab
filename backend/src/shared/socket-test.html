@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>MultiChat – Test Agentes</title>
+
+  <!-- Socket.IO cliente servido por el backend -->
+  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 700px;
+    }
+
+    input, select, button {
+      padding: 6px;
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    #messages {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+      background: #fafafa;
+    }
+
+    .msg {
+      margin-bottom: 6px;
+    }
+
+    .agent {
+      color: #0066cc;
+    }
+
+    .customer {
+      color: #009933;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🧪 MultiChat – Test de Agentes</h2>
+
+  <!-- CONFIGURACIÓN -->
+  <div>
+    <label>Chat ID:</label><br />
+    <input id="chatId" value="c123" />
+    <button onclick="joinChat()">Unirse al chat</button>
+  </div>
+
+  <hr />
+
+  <div>
+    <label>Rol:</label><br />
+    <select id="senderType">
+      <option value="agent">Agente</option>
+      <option value="customer">Cliente</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Sender ID (agentId o customerId):</label><br />
+    <input id="senderId" placeholder="pega aquí el ID" />
+  </div>
+
+  <hr />
+
+  <!-- MENSAJES -->
+  <div id="messages"></div>
+
+  <input id="messageInput" placeholder="Escribe un mensaje..." size="40" />
+  <button onclick="sendMessage()">Enviar</button>
+
+  <script>
+    const socket = io("http://localhost:3000");
+
+    const chatInput = document.getElementById("chatId");
+    const senderTypeInput = document.getElementById("senderType");
+    const senderIdInput = document.getElementById("senderId");
+    const messageInput = document.getElementById("messageInput");
+    const messagesDiv = document.getElementById("messages");
+
+    socket.on("connect", () => {
+      console.log("🟢 Conectado a Socket.IO:", socket.id);
+    });
+
+    socket.on("new-message", (msg) => {
+      appendMessage(msg);
+    });
+
+    function joinChat() {
+      const chatId = chatInput.value;
+      socket.emit("join-chat", chatId);
+      appendSystemMessage(`🟢 Unido al chat ${chatId}`);
+      loadHistory(chatId);
+    }
+
+    async function loadHistory(chatId) {
+      const res = await fetch(`http://localhost:3000/chats/${chatId}/messages`);
+      const history = await res.json();
+
+      messagesDiv.innerHTML = "";
+      history.forEach(m => appendMessage(m));
+    }
+
+    async function sendMessage() {
+      const chatId = chatInput.value;
+      const senderType = senderTypeInput.value;
+      const senderId = senderIdInput.value;
+      const content = messageInput.value;
+
+      if (!chatId || !senderId || !content) {
+        alert("Completa todos los campos");
+        return;
+      }
+
+      await fetch(`http://localhost:3000/chats/${chatId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderType,
+          senderId,
+          content
+        })
+      });
+
+      messageInput.value = "";
+    }
+
+    function appendMessage(msg) {
+      const div = document.createElement("div");
+      div.className = "msg " + msg.senderType;
+      div.textContent = `[${msg.senderType}] ${msg.senderId}: ${msg.content}`;
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function appendSystemMessage(text) {
+      const div = document.createElement("div");
+      div.className = "msg";
+      div.style.color = "#999";
+      div.textContent = text;
+      messagesDiv.appendChild(div);
+    }
+  </script>
+
+</body>
+</html>

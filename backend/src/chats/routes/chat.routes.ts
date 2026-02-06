@@ -3,9 +3,9 @@ import {
   getOrCreateChat,
   getChatByCustomer,
   listChats,
+  getMessagesByChat,
+  autoAssignAgent,
 } from '../stores/chat.store';
-import { autoAssignAgent } from '../stores/chat.store';
-
 
 const router = Router();
 
@@ -14,6 +14,21 @@ const router = Router();
  */
 router.get('/', (_req: Request, res: Response) => {
   res.json(listChats());
+});
+
+/**
+ * Obtener mensajes de un chat
+ */
+router.get('/:customerId/messages', (req: Request, res: Response) => {
+  const customerId = req.params.customerId as string;
+
+  const messages = getMessagesByChat(customerId);
+
+  if (!messages) {
+    return res.status(404).json({ error: 'Chat not found' });
+  }
+
+  res.json(messages);
 });
 
 /**
@@ -42,10 +57,15 @@ router.post('/', (req: Request, res: Response) => {
   }
 
   const existing = getChatByCustomer(customerId);
-  const chat = getOrCreateChat(customerId, customerName);
+
+  getOrCreateChat(customerId, customerName);
   autoAssignAgent(customerId);
+
+  const chat = getChatByCustomer(customerId)!;
 
   res.status(existing ? 200 : 201).json(chat);
 });
+
+
 
 export default router;

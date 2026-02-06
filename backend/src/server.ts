@@ -1,25 +1,22 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import http from 'http';
 import agentRoutes from './agents/agent.routes';
 import chatRoutes from './chats/routes/chat.routes';
-import http from 'http';
+import messageRoutes from './chats/routes/message.routes';
 import { initSocket } from './shared/socket';
 
 const app = express();
 const PORT = 3000;
 
-// 🔹 Crear servidor HTTP
 const server = http.createServer(app);
 
-// 🔹 Middlewares
 app.use(express.json());
+
 app.use('/agents', agentRoutes);
 app.use('/chats', chatRoutes);
+app.use('/chats', messageRoutes);
 
-// 🔹 Inicializar sockets
-initSocket(server);
-
-// 🔹 Health check
-app.get('/health', (_req: Request, res: Response) => {
+app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
     service: 'multichat-backend',
@@ -27,12 +24,14 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// 🔹 Root
-app.get('/', (_req: Request, res: Response) => {
-  res.send('Backend Multichat activo 🚀');
+app.get('/', (_req, res) => {
+  res.send('Backend Multichat activo');
 });
 
-// 🔹 SOLO ESTE listen
+//Inicializar sockets UNA sola vez
+initSocket(server);
+
+// Escuchar UNA sola vez
 server.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });

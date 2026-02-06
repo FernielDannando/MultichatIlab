@@ -144,3 +144,13 @@ export function autoAssignAgent(customerId: string): Chat | null {
 
   return chat;
 }
+
+/**
+ * Obtener mensajes de un chat
+ */
+export function getMessagesByChat(customerId: string): Message[] | null {
+  const chat = chats.get(customerId);
+  if (!chat) return null;
+
+  return chat.messages;
+}
